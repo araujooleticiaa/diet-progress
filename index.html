@@ -110,6 +110,37 @@ body{
 .meal-macros{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);padding-top:.7rem;border-top:1px solid var(--border)}
 .meal-macros b{color:var(--text)}
 
+.custom-list{margin-top:.8rem;display:flex;flex-direction:column;gap:6px}
+.custom-item{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:11px;padding:8px 10px;flex-wrap:wrap}
+.ci-info{flex:1;min-width:100px}
+.ci-info b{font-size:12.5px;font-weight:600;color:var(--text);display:block}
+.ci-info span{font-size:11px;color:var(--text-3)}
+.ci-kcal{font-size:12px;font-weight:700;color:var(--amber);white-space:nowrap}
+.ci-remove{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-3);font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ci-remove:hover{background:rgba(255,91,61,.15);color:var(--amber);border-color:rgba(255,91,61,.3)}
+
+.add-food-btn{margin-top:.9rem;width:100%;padding:10px;border-radius:11px;border:1px dashed var(--border-glow);background:transparent;color:var(--text-2);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.add-food-btn:hover{border-color:var(--accent);color:var(--accent)}
+.add-food-panel{margin-top:.9rem;padding:.9rem;border-radius:13px;background:var(--bg-2);border:1px solid var(--border)}
+.food-search{display:flex;gap:6px}
+.food-search input{flex:1;min-width:0;padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit;font-size:12.5px}
+.food-search input:focus{outline:none;border-color:var(--accent)}
+.food-search button{padding:9px 13px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#231a08;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.food-search .af-close{background:transparent;border:1px solid var(--border);color:var(--text-2);font-weight:400;font-size:16px;padding:0 12px}
+.food-results{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.food-result-item{padding:8px 10px;border-radius:9px;background:var(--card);border:1px solid var(--border);cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.food-result-item:hover{border-color:var(--accent);background:var(--card-2)}
+.fr-name{font-size:12.5px;color:var(--text);flex:1;min-width:0}
+.fr-brand{color:var(--text-3);font-weight:400}
+.fr-kcal{font-size:11.5px;color:var(--amber);font-weight:700;white-space:nowrap}
+.food-msg{font-size:12px;color:var(--text-3);padding:6px 2px}
+.manual-toggle{margin-top:8px;background:none;border:none;color:var(--teal);font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0}
+.manual-form{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.manual-form input{padding:8px 9px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:inherit;font-size:12px}
+.manual-form input:focus{outline:none;border-color:var(--accent)}
+.manual-form input:first-child{grid-column:1/-1}
+.manual-form button{grid-column:1/-1;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#231a08;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:2px}
+
 .day-done{margin:0 0 1.4rem;padding:1.1rem 1.3rem;border-radius:13px;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(255,176,32,.18),rgba(232,166,40,.12));border:1px solid rgba(232,166,40,.4)}
 .day-done>i{font-size:26px;color:var(--green)}
 .day-done b{font-size:15px;font-weight:700;display:block}
@@ -308,7 +339,7 @@ function resolveChoice(list, s, keyField, gramsField){
   const grams = (s[gramsField]!=null && s[gramsField]!=='') ? Number(s[gramsField]) : choiceDef.grams;
   return { key, grams, def:choiceDef };
 }
-function mealMacros(meal, s){
+function mealMacros(meal, s, customItems){
   s=s||{};
   let t={kcal:0,p:0,c:0,g:0};
   function add(key,grams){ const m=foodMacros(key,grams); t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.g+=m.g; }
@@ -327,14 +358,21 @@ function mealMacros(meal, s){
     const grams=(s.feijaoGrams!=null && s.feijaoGrams!=='') ? Number(s.feijaoGrams) : meal.feijao.grams;
     add('feijao', grams);
   }
+  (customItems||[]).forEach(it=>{
+    const r=(it.grams||0)/100;
+    t.kcal+=it.kcal*r; t.p+=it.p*r; t.c+=it.c*r; t.g+=it.g*r;
+  });
   return { kcal:Math.round(t.kcal), p:Math.round(t.p*10)/10, c:Math.round(t.c*10)/10, g:Math.round(t.g*10)/10 };
 }
 
 // ===== ESTADO =====
 const DONE_KEY='dieta_done_v2';
 const SEL_KEY='dieta_sel_v2';
+const CUSTOM_KEY='dieta_custom_v1';
 let done=JSON.parse(localStorage.getItem(DONE_KEY)||'{}');
 let sel=JSON.parse(localStorage.getItem(SEL_KEY)||'{}');
+let customFoods=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'{}'); // itens adicionados manualmente/via busca
+let addFoodUI={}; // estado transitório (não persiste) de painel de busca aberto/fechado por refeição
 
 function todayISO(){return new Date().toISOString().slice(0,10)}
 function jsWeekdayToKey(d){return ['dom','seg','ter','qua','qui','sex','sab'][d]}
@@ -368,10 +406,103 @@ function setGrams(dayKey,mi,gramsField,value){
   persistSel(); renderAll();
 }
 
+// ===== ALIMENTOS EXTRAS (adicionados manualmente ou via busca) =====
+function getCustomItems(dayKey,mi){ return customFoods[stateKey(dayKey,mi)] || []; }
+function persistCustom(){ localStorage.setItem(CUSTOM_KEY, JSON.stringify(customFoods)); }
+function addCustomItemRaw(dayKey,mi,item){
+  const k=stateKey(dayKey,mi);
+  customFoods[k]=customFoods[k]||[];
+  customFoods[k].push(item);
+  persistCustom();
+}
+function removeCustomItem(dayKey,mi,id){
+  const k=stateKey(dayKey,mi);
+  customFoods[k]=(customFoods[k]||[]).filter(it=>it.id!==id);
+  persistCustom(); renderAll();
+}
+function setCustomItemGrams(dayKey,mi,id,grams){
+  const k=stateKey(dayKey,mi);
+  const item=(customFoods[k]||[]).find(it=>it.id===id);
+  if(item){ item.grams=Number(grams)||0; persistCustom(); renderAll(); }
+}
+function toggleAddFood(dayKey,mi){
+  const k=stateKey(dayKey,mi);
+  addFoodUI[k]=addFoodUI[k]||{};
+  addFoodUI[k].open=!addFoodUI[k].open;
+  renderAll();
+}
+function toggleManual(dayKey,mi){
+  const k=stateKey(dayKey,mi);
+  addFoodUI[k]=addFoodUI[k]||{};
+  addFoodUI[k].manualOpen=!addFoodUI[k].manualOpen;
+  renderAll();
+}
+// Busca no Open Food Facts (gratuito, sem chave). Atualiza só a área de resultados, sem re-renderizar a página toda.
+async function doSearchFood(dayKey,mi){
+  const k=stateKey(dayKey,mi);
+  const inputEl=document.getElementById(`search_${dayKey}_${mi}`);
+  const resultsEl=document.getElementById(`results_${dayKey}_${mi}`);
+  const query=inputEl?inputEl.value.trim():'';
+  if(!query || !resultsEl) return;
+  resultsEl.innerHTML='<div class="food-msg">Buscando…</div>';
+  try{
+    const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments`;
+    const res=await fetch(url);
+    const data=await res.json();
+    const products=(data.products||[]).filter(p=>p.nutriments && (p.nutriments['energy-kcal_100g']!=null));
+    if(!products.length){
+      resultsEl.innerHTML='<div class="food-msg">Nada encontrado. Tente outro termo ou use a entrada manual abaixo.</div>';
+      return;
+    }
+    addFoodUI[k]=addFoodUI[k]||{};
+    addFoodUI[k].results=products.slice(0,8).map(p=>({
+      name:p.product_name||'Produto sem nome',
+      brand:p.brands||'',
+      kcal:Math.round(p.nutriments['energy-kcal_100g']||0),
+      p:Math.round((p.nutriments['proteins_100g']||0)*10)/10,
+      c:Math.round((p.nutriments['carbohydrates_100g']||0)*10)/10,
+      g:Math.round((p.nutriments['fat_100g']||0)*10)/10
+    }));
+    renderSearchResults(dayKey,mi);
+  }catch(e){
+    resultsEl.innerHTML='<div class="food-msg">Não consegui buscar agora (sem internet ou API fora do ar). Use a entrada manual abaixo.</div>';
+  }
+}
+function renderSearchResults(dayKey,mi){
+  const resultsEl=document.getElementById(`results_${dayKey}_${mi}`);
+  if(!resultsEl) return;
+  const list=(addFoodUI[stateKey(dayKey,mi)]||{}).results||[];
+  resultsEl.innerHTML=list.map((r,i)=>`<div class="food-result-item" onclick="pickSearchResult('${dayKey}',${mi},${i})">
+      <div class="fr-name">${r.name}${r.brand?` <span class="fr-brand">· ${r.brand}</span>`:''}</div>
+      <div class="fr-kcal">${r.kcal} kcal/100g</div>
+    </div>`).join('');
+}
+function pickSearchResult(dayKey,mi,i){
+  const k=stateKey(dayKey,mi);
+  const r=(addFoodUI[k]||{}).results ? addFoodUI[k].results[i] : null;
+  if(!r) return;
+  addCustomItemRaw(dayKey,mi,{id:'c'+Date.now()+Math.random().toString(36).slice(2,6), name:r.name, kcal:r.kcal, p:r.p, c:r.c, g:r.g, grams:100});
+  addFoodUI[k]={open:false};
+  renderAll();
+}
+function addManualFood(dayKey,mi){
+  const pre=`manual_${dayKey}_${mi}_`;
+  const val=(id,fallback)=>{ const el=document.getElementById(pre+id); return el?el.value:fallback; };
+  const name=(val('name','')||'').trim() || 'Alimento';
+  const kcal=Number(val('kcal',0))||0;
+  const p=Number(val('p',0))||0;
+  const c=Number(val('c',0))||0;
+  const g=Number(val('g',0))||0;
+  const grams=Number(val('grams',100))||100;
+  addCustomItemRaw(dayKey,mi,{id:'c'+Date.now()+Math.random().toString(36).slice(2,6), name, kcal, p, c, g, grams});
+  addFoodUI[stateKey(dayKey,mi)]={open:false};
+  renderAll();
+}
+
 function dayTotals(day){
   let target={p:0,c:0,g:0,kcal:0}, eaten={p:0,c:0,g:0,kcal:0};
   day.meals.forEach((meal,mi)=>{
-    const mac=mealMacros(meal, getSel(day.key,mi));
+    const mac=mealMacros(meal, getSel(day.key,mi), getCustomItems(day.key,mi));
     target.p+=mac.p; target.c+=mac.c; target.g+=mac.g; target.kcal+=mac.kcal;
     if(isDone(day.key,mi)){ eaten.p+=mac.p; eaten.c+=mac.c; eaten.g+=mac.g; eaten.kcal+=mac.kcal; }
   });
@@ -468,10 +599,47 @@ function singleFoodRow(label, foodKey, grams, dayKey, mi, gramsField){
   </div>`;
 }
 
+function renderCustomList(dayKey,mi,items){
+  if(!items.length) return '';
+  return `<div class="custom-list">${items.map(it=>`
+    <div class="custom-item">
+      <div class="ci-info"><b>${it.name}</b><span>${it.kcal} kcal/100g</span></div>
+      ${qtyStepper(`cin_${dayKey}_${mi}_${it.id}`, it.grams, 10, 'g', `oninput="setCustomItemGrams('${dayKey}',${mi},'${it.id}',this.value)"`, '')}
+      <span class="ci-kcal">${Math.round(it.kcal*it.grams/100)} kcal</span>
+      <button type="button" class="ci-remove" onclick="event.stopPropagation();removeCustomItem('${dayKey}',${mi},'${it.id}')">&times;</button>
+    </div>`).join('')}</div>`;
+}
+function renderAddFoodBlock(dayKey,mi){
+  const k=stateKey(dayKey,mi);
+  const ui=addFoodUI[k]||{};
+  if(!ui.open){
+    return `<button type="button" class="add-food-btn" onclick="event.stopPropagation();toggleAddFood('${dayKey}',${mi})"><i class="fa-solid fa-plus"></i> Adicionar alimento</button>`;
+  }
+  return `<div class="add-food-panel" onclick="event.stopPropagation()">
+    <div class="food-search">
+      <input type="text" id="search_${dayKey}_${mi}" placeholder="Buscar alimento (ex: whey, iogurte, pão integral)" onkeydown="if(event.key==='Enter'){event.preventDefault();doSearchFood('${dayKey}',${mi})}">
+      <button type="button" onclick="doSearchFood('${dayKey}',${mi})">Buscar</button>
+      <button type="button" class="af-close" onclick="toggleAddFood('${dayKey}',${mi})">&times;</button>
+    </div>
+    <div class="food-results" id="results_${dayKey}_${mi}"></div>
+    <button type="button" class="manual-toggle" onclick="toggleManual('${dayKey}',${mi})">${ui.manualOpen?'Cancelar entrada manual':'ou adicionar manualmente'}</button>
+    ${ui.manualOpen?`<div class="manual-form">
+      <input id="manual_${dayKey}_${mi}_name" placeholder="Nome do alimento">
+      <input id="manual_${dayKey}_${mi}_kcal" type="number" placeholder="kcal/100g">
+      <input id="manual_${dayKey}_${mi}_p" type="number" placeholder="Proteína/100g">
+      <input id="manual_${dayKey}_${mi}_c" type="number" placeholder="Carbo/100g">
+      <input id="manual_${dayKey}_${mi}_g" type="number" placeholder="Gordura/100g">
+      <input id="manual_${dayKey}_${mi}_grams" type="number" placeholder="Grama consumida" value="100">
+      <button type="button" onclick="addManualFood('${dayKey}',${mi})">Adicionar</button>
+    </div>`:''}
+  </div>`;
+}
+
 function renderMeals(day){
   mealsWrap.innerHTML = day.meals.map((meal,mi)=>{
     const s=getSel(day.key,mi);
-    const mac=mealMacros(meal,s);
+    const customItems=getCustomItems(day.key,mi);
+    const mac=mealMacros(meal,s,customItems);
     const dn=isDone(day.key,mi);
 
     const breadR = meal.bread ? resolveChoice(meal.bread.choices, s, 'breadKey','breadGrams') : null;
@@ -519,8 +687,15 @@ function renderMeals(day){
         <span><b>${mac.c}g</b> carboidrato</span>
         <span><b>${mac.g}g</b> gordura</span>
       </div>
+      ${renderCustomList(day.key,mi,customItems)}
+      ${renderAddFoodBlock(day.key,mi)}
     </div>`;
   }).join('');
+  // repopula resultados de busca já carregados (se o painel de alguma refeição estava aberto com resultados)
+  day.meals.forEach((meal,mi)=>{
+    const ui=addFoodUI[stateKey(day.key,mi)];
+    if(ui && ui.open && ui.results && ui.results.length) renderSearchResults(day.key,mi);
+  });
 }
 
 function renderAll(){
