@@ -446,16 +446,23 @@ async function doSearchFood(dayKey,mi){
   if(!query || !resultsEl) return;
   resultsEl.innerHTML='<div class="food-msg">Buscando…</div>';
   try{
-    const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments`;
+    const url=`https://br.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&sort_by=unique_scans_n`
+      +`&tagtype_0=countries&tag_contains_0=contains&tag_0=Brazil`
+      +`&fields=product_name,brands,nutriments,countries_tags`;
     const res=await fetch(url);
     const data=await res.json();
-    const products=(data.products||[]).filter(p=>p.nutriments && (p.nutriments['energy-kcal_100g']!=null));
+    // filtro extra no cliente: garante que só ficam produtos vendidos no Brasil,
+    // mesmo se o filtro do servidor não pegar tudo
+    const products=(data.products||[]).filter(p=>
+      p.nutriments && p.nutriments['energy-kcal_100g']!=null &&
+      Array.isArray(p.countries_tags) && p.countries_tags.includes('en:brazil')
+    ).slice(0,8);
     if(!products.length){
-      resultsEl.innerHTML='<div class="food-msg">Nada encontrado. Tente outro termo ou use a entrada manual abaixo.</div>';
+      resultsEl.innerHTML='<div class="food-msg">Nada encontrado no Brasil pra esse termo. Tente outra palavra ou use a entrada manual abaixo.</div>';
       return;
     }
     addFoodUI[k]=addFoodUI[k]||{};
-    addFoodUI[k].results=products.slice(0,8).map(p=>({
+    addFoodUI[k].results=products.map(p=>({
       name:p.product_name||'Produto sem nome',
       brand:p.brands||'',
       kcal:Math.round(p.nutriments['energy-kcal_100g']||0),
@@ -682,13 +689,13 @@ function renderMeals(day){
       </div>
       ${rows}
       <ul class="food-list">${itemsHtml}</ul>
+      ${renderCustomList(day.key,mi,customItems)}
+      ${renderAddFoodBlock(day.key,mi)}
       <div class="meal-macros">
         <span><b>${mac.p}g</b> proteína</span>
         <span><b>${mac.c}g</b> carboidrato</span>
         <span><b>${mac.g}g</b> gordura</span>
       </div>
-      ${renderCustomList(day.key,mi,customItems)}
-      ${renderAddFoodBlock(day.key,mi)}
     </div>`;
   }).join('');
   // repopula resultados de busca já carregados (se o painel de alguma refeição estava aberto com resultados)
