@@ -61,6 +61,11 @@ body{
 .kcal-row .kv span{font-size:13px;color:var(--text-2);font-weight:500}
 .kcal-row .rem{font-size:12.5px;color:var(--text-2);text-align:right}
 .kcal-row .rem b{color:var(--amber)}
+.kcal-row .rem.over,.kcal-row .rem.over b{color:#ff3b3b;font-weight:800}
+.burst-badge{display:inline-flex;align-items:center;margin-left:8px;font-size:11px;font-weight:800;letter-spacing:.04em;color:#fff;background:linear-gradient(135deg,#ff3b3b,#b91c1c);padding:3px 9px;border-radius:20px;vertical-align:middle;animation:burstPulse 1.1s ease-in-out infinite}
+@keyframes burstPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.bar.over{border-color:rgba(255,59,59,.5)}
+.bar.over>i{background:linear-gradient(90deg,#ff3b3b,#b91c1c)!important}
 .dh-hint{font-size:11px;color:var(--text-3);margin-bottom:.9rem}
 .macros{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .macro{background:var(--bg-2);border:1px solid var(--border);border-radius:11px;padding:9px 10px;text-align:center}
@@ -69,6 +74,8 @@ body{
 .macro.p b{color:var(--accent)}
 .macro.c b{color:var(--teal)}
 .macro.g b{color:var(--amber)}
+.macro.over{border-color:rgba(255,59,59,.5)}
+.macro.over b{color:#ff3b3b}
 
 .sec-title{display:flex;align-items:center;gap:10px;margin:0 0 .8rem;font-size:14px;font-weight:600;color:var(--text-2)}
 
@@ -169,16 +176,16 @@ body{
       <div><h2 id="dayTitle"></h2><p id="dayTreino"></p></div>
       <span class="dh-badge" id="dayBadge"></span>
     </div>
-    <div class="kcal-row">
-      <div class="kv"><span id="kcalDone">0</span> <span>/ <span id="kcalTarget">0</span> kcal</span></div>
-      <div class="rem"><b id="kcalRem">0</b> kcal restantes</div>
+    <div class="kcal-row" id="kcalRow">
+      <div class="kv"><span id="kcalDone">0</span> <span>/ <span id="kcalTarget">0</span> kcal</span> <span class="burst-badge" id="burstBadge" style="display:none">ESTOURADA</span></div>
+      <div class="rem" id="kcalRemWrap"><b id="kcalRem">0</b> kcal restantes</div>
     </div>
-    <div class="bar"><i id="barFill"></i></div>
-    <p class="dh-hint">meta = soma real das refeições de hoje, conforme as proteínas/carboidratos escolhidos abaixo</p>
+    <div class="bar" id="kcalBar"><i id="barFill"></i></div>
+    <p class="dh-hint">meta fixa de 1.500 kcal/dia · passou disso, a barra fica vermelha</p>
     <div class="macros">
       <div class="macro p"><b id="pVal">0g</b><span>Proteína</span></div>
       <div class="macro c"><b id="cVal">0g</b><span>Carbo</span></div>
-      <div class="macro g"><b id="gVal">0g</b><span>Gordura</span></div>
+      <div class="macro g"><b id="gVal">0g</b><span>Gordura · livre</span></div>
     </div>
   </div>
 
@@ -531,24 +538,52 @@ function renderTabs(){
   }).join('');
 }
 
+const DAILY_KCAL_LIMIT=1500; // teto fixo do dia, igual pra todos os dias
+const BODY_WEIGHT_KG=103;
+const LEAN_MASS_KG=60;
+const PROTEIN_G_PER_KG_LEAN=2.2; // ancorado na massa magra, não no peso total (Helms et al.)
+const PROTEIN_TARGET_G = Math.round(LEAN_MASS_KG*PROTEIN_G_PER_KG_LEAN*10)/10;    // 132g
+const PROTEIN_TARGET_KCAL = PROTEIN_TARGET_G*4;                                  // 528 kcal
+const CARB_TARGET_KCAL = Math.max(0, DAILY_KCAL_LIMIT-PROTEIN_TARGET_KCAL);       // resto do teto de 1200
+const CARB_TARGET_G = Math.round((CARB_TARGET_KCAL/4)*10)/10;                     // 168g
+// Gordura não tem meta própria — vem naturalmente das fontes de proteína (ovos, queijo, frango etc.)
 function renderHead(day){
   document.getElementById('dayTitle').textContent=day.label + (day.key===TODAY_KEY?' · hoje':'');
   document.getElementById('dayTreino').textContent=day.treino;
   document.getElementById('dayBadge').textContent=day.badge;
   const {target,eaten}=dayTotals(day);
+  const over = eaten.kcal > DAILY_KCAL_LIMIT;
+
   document.getElementById('kcalDone').textContent=Math.round(eaten.kcal);
-  document.getElementById('kcalTarget').textContent=Math.round(target.kcal);
-  document.getElementById('kcalRem').textContent=Math.max(0,Math.round(target.kcal-eaten.kcal));
-  const pct = target.kcal ? Math.min(100, Math.round(eaten.kcal/target.kcal*100)) : 0;
+  document.getElementById('kcalTarget').textContent=DAILY_KCAL_LIMIT;
+
+  const barEl=document.getElementById('kcalBar');
+  const remEl=document.getElementById('kcalRemWrap');
+  const badgeEl=document.getElementById('burstBadge');
+  barEl.classList.toggle('over', over);
+  remEl.classList.toggle('over', over);
+  badgeEl.style.display = over ? 'inline-flex' : 'none';
+
+  if(over){
+    document.getElementById('kcalRem').textContent = Math.round(eaten.kcal-DAILY_KCAL_LIMIT);
+    remEl.lastChild.textContent = ' kcal acima da meta';
+  } else {
+    document.getElementById('kcalRem').textContent = Math.round(DAILY_KCAL_LIMIT-eaten.kcal);
+    remEl.lastChild.textContent = ' kcal restantes';
+  }
+
+  const pct = Math.min(100, Math.round(eaten.kcal/DAILY_KCAL_LIMIT*100));
   document.getElementById('barFill').style.width=pct+'%';
-  document.getElementById('pVal').textContent=eaten.p+'g / '+target.p+'g';
-  document.getElementById('cVal').textContent=eaten.c+'g / '+target.c+'g';
-  document.getElementById('gVal').textContent=eaten.g+'g / '+target.g+'g';
+  document.getElementById('pVal').textContent=eaten.p+'g / '+PROTEIN_TARGET_G+'g';
+  document.getElementById('cVal').textContent=eaten.c+'g / '+CARB_TARGET_G+'g';
+  document.getElementById('gVal').textContent=eaten.g+'g';
+  document.getElementById('pVal').parentElement.classList.toggle('over', eaten.p>PROTEIN_TARGET_G);
+  document.getElementById('cVal').parentElement.classList.toggle('over', eaten.c>CARB_TARGET_G);
 
   const bannerEl=document.getElementById('dayDoneBanner');
   if(isDayFullyDone(day)){
-    bannerEl.innerHTML=`<div class="day-done"><i class="fa-solid fa-circle-check"></i>
-      <div><b>Dia completo!</b><span>Todas as refeições marcadas · ${Math.round(target.kcal)} kcal reais no dia de hoje</span></div>
+    bannerEl.innerHTML=`<div class="day-done${over?' low':''}"><i class="fa-solid ${over?'fa-triangle-exclamation':'fa-circle-check'}"></i>
+      <div><b>${over?'Dia completo — meta estourada':'Dia completo!'}</b><span>Todas as refeições marcadas · ${Math.round(eaten.kcal)} kcal (meta: ${DAILY_KCAL_LIMIT})</span></div>
     </div>`;
   } else bannerEl.innerHTML='';
 }
