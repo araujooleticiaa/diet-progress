@@ -162,9 +162,10 @@ body{
 <script>
 // ===== BASE DE ALIMENTOS (Tabela TACO / UNICAMP, valores por 100g) =====
 const FOODS = {
-  lombo:         { label:'Lombo Suíno Grelhado',   per100:{kcal:210, p:35.7, c:0.0,  g:6.4} },
-  frango:        { label:'Frango Peito Grelhado',  per100:{kcal:159, p:32.0, c:0.0,  g:2.5} },
-  peixe:         { label:'Peixe Branco Grelhado',  per100:{kcal:96,  p:20.1, c:0.0,  g:1.7} },
+  lombo:          { label:'Lombo Suíno Grelhado',                   per100:{kcal:210, p:35.7, c:0.0,  g:6.4} },
+  frango:         { label:'Frango Peito Grelhado',                  per100:{kcal:159, p:32.0, c:0.0,  g:2.5} },
+  frangoSobrecoxa:{ label:'Frango Sobrecoxa (com pele) Assada',      per100:{kcal:260, p:28.7, c:0.0,  g:15.2} },
+  peixe:          { label:'Peixe Branco Grelhado',                  per100:{kcal:96,  p:20.1, c:0.0,  g:1.7} },
   ovo:           { label:'Ovo cozido',              per100:{kcal:146, p:13.3, c:0.6,  g:9.5} },
   arrozBranco:   { label:'Arroz Branco Cozido',     per100:{kcal:128, p:2.5,  c:28.1, g:0.2} },
   arrozIntegral: { label:'Arroz Integral Cozido',   per100:{kcal:124, p:2.6,  c:25.8, g:1.0} },
@@ -194,7 +195,8 @@ function almocoTreinoMeal(prot, carbList, feijaoG){
   return { time:'12:30', title:'Almoço',
     protein:{choices:[
       {key:'lombo',grams:prot.lombo,label:`${prot.lombo}g de Lombo Suíno Grelhado`,short:'Lombo',extra:[]},
-      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,short:'Frango',extra:[]},
+      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,short:'Peito',extra:[]},
+      {key:'frangoSobrecoxa',grams:prot.frango,label:`${prot.frango}g de Frango Sobrecoxa (com pele) Assada`,short:'Sobrecoxa',extra:[]},
       {key:'peixe',grams:prot.peixe,label:`${prot.peixe}g de Peixe Branco Grelhado`,short:'Peixe',extra:[]},
       {key:'ovo',grams:prot.ovoG,label:`${prot.ovoN} ovos inteiros (cozidos ou mexidos, sem óleo extra)`,short:`Ovos (${prot.ovoN})`,extra:[]}
     ]},
@@ -207,7 +209,8 @@ function jantarTreinoMeal(prot, carbList, bonus){
   return { time:'21:00', title:'Jantar',
     protein:{choices:[
       {key:'lombo',grams:prot.lombo,label:`${prot.lombo}g de Lombo Suíno Grelhado`,short:'Lombo',extra:bonus?eggBonus(150,3):[]},
-      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,short:'Frango',extra:bonus?eggBonus(150,3):[]},
+      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,short:'Peito',extra:bonus?eggBonus(150,3):[]},
+      {key:'frangoSobrecoxa',grams:prot.frango,label:`${prot.frango}g de Frango Sobrecoxa (com pele) Assada`,short:'Sobrecoxa',extra:bonus?eggBonus(150,3):[]},
       {key:'peixe',grams:prot.peixe,label:`${prot.peixe}g de Peixe Grelhado`,short:'Peixe',extra:bonus?eggBonus(150,3):[]},
       {key:'ovo',grams:prot.ovoG,label:`${prot.ovoN} ovos inteiros (cozidos ou mexidos, sem óleo extra)`,short:`Ovos (${prot.ovoN})`,extra:[]}
     ]},
@@ -414,7 +417,7 @@ function renderHead(day){
 
 // linha com botões de escolha do alimento + campo de grama editável (calcula na grama real digitada)
 const EGG_G=50; // peso considerado por unidade de ovo
-const FOOD_ICONS={lombo:'🥩',frango:'🍗',peixe:'🐟',ovo:'🥚',arrozBranco:'🍚',arrozIntegral:'🌾',batataInglesa:'🥔',batataDoce:'🍠',paoForma:'🍞',paoFrances:'🥖'};
+const FOOD_ICONS={lombo:'🥩',frango:'🍗',frangoSobrecoxa:'🍖',peixe:'🐟',ovo:'🥚',arrozBranco:'🍚',arrozIntegral:'🌾',batataInglesa:'🥔',batataDoce:'🍠',paoForma:'🍞',paoFrances:'🥖'};
 function bumpQty(inputId, step){
   const el=document.getElementById(inputId);
   if(!el)return;
