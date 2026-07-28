@@ -128,6 +128,11 @@ function foodMacros(key,grams){
 }
 function eggBonus(g,n){ return [{key:'ovo',grams:g,label:`+ ${n} ovos inteiros (bônus de proteína)`}] }
 
+// Meta: 108g proteína/dia (1,8g/kg x 60kg de massa magra), igual em dias com treino e sem treino.
+// Quantidades padronizadas de proteína no almoço/jantar (já contando pão, arroz/batata e feijão
+// que também entram na conta) para o total do dia bater ~108g, com treino ou sem treino.
+const PROT_STANDARD = {lombo:105, frango:115, peixe:185, ovoG:250, ovoN:5};
+
 // ===== DIAS =====
 const paoChoices=[
   {key:'paoForma',grams:50,label:'2 fatias de Pão de Forma',short:'Pão de forma'},
@@ -166,7 +171,7 @@ function jantarTreinoMeal(prot, carbList, bonus){
 }
 function posTreinoMeal(time){
   return { time, title:'Pós-treino imediato',
-    eggsFixed:{grams:200,label:'4 ovos inteiros (cozidos ou mexidos, sem óleo extra)'},
+    eggsFixed:{grams:150,label:'3 ovos inteiros (cozidos ou mexidos, sem óleo extra)'},
     bread:{choices:paoChoices}, freeNotes:[cafePreto] };
 }
 function cafeManhaMeal(){
@@ -210,8 +215,8 @@ const carbFinde_jan = [
 function mealsSemTreino(){
   return [
     cafeManhaMeal(),
-    almocoTreinoMeal({lombo:180,frango:200,peixe:220,ovoG:250,ovoN:5}, carbFinde_alm, 40),
-    jantarTreinoMeal({lombo:140,frango:160,peixe:180,ovoG:250,ovoN:5}, carbFinde_jan, false)
+    almocoTreinoMeal(PROT_STANDARD, carbFinde_alm, 40),
+    jantarTreinoMeal(PROT_STANDARD, carbFinde_jan, false)
   ];
 }
 
@@ -219,56 +224,56 @@ const DAYS = [
  {key:'seg', label:'Segunda', short:'SEG', treinoDesc:'Jiu Jitsu + Musculação + Esteira', defaultMode:'treino',
    mealsTreino:[
      posTreinoMeal('07:45'),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:300,ovoN:6}, carbSegSex_alm, 60),
-     jantarTreinoMeal({lombo:180,frango:200,peixe:220,ovoG:350,ovoN:7}, carbSegSex_jan, false)
+     almocoTreinoMeal(PROT_STANDARD, carbSegSex_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbSegSex_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'ter', label:'Terça', short:'TER', treinoDesc:'Dia de treino', defaultMode:'treino',
    mealsTreino:[
      cafeManhaMeal(),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:250,ovoN:5}, carbMeio_alm, 60),
-     jantarTreinoMeal({lombo:150,frango:170,peixe:200,ovoG:300,ovoN:6}, carbMeio_jan, true)
+     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'qua', label:'Quarta', short:'QUA', treinoDesc:'Dia de treino', defaultMode:'treino',
    mealsTreino:[
      cafeManhaMeal(),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:250,ovoN:5}, carbMeio_alm, 60),
-     jantarTreinoMeal({lombo:150,frango:170,peixe:200,ovoG:400,ovoN:8}, carbMeio_jan, false)
+     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'qui', label:'Quinta', short:'QUI', treinoDesc:'Dia de treino', defaultMode:'treino',
    mealsTreino:[
      cafeManhaMeal(),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:250,ovoN:5}, carbMeio_alm, 40),
-     jantarTreinoMeal({lombo:150,frango:170,peixe:200,ovoG:300,ovoN:6}, carbMeio_jan, true)
+     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 40),
+     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'sex', label:'Sexta', short:'SEX', treinoDesc:'Musculação', defaultMode:'treino',
    mealsTreino:[
      posTreinoMeal('07:15'),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:300,ovoN:6}, carbSegSex_alm, 60),
-     jantarTreinoMeal({lombo:180,frango:200,peixe:220,ovoG:350,ovoN:7}, carbSegSex_jan, false)
+     almocoTreinoMeal(PROT_STANDARD, carbSegSex_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbSegSex_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'sab', label:'Sábado', short:'SÁB', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',
    mealsTreino:[
      cafeManhaMeal(),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:250,ovoN:5}, carbMeio_alm, 60),
-     jantarTreinoMeal({lombo:150,frango:170,peixe:200,ovoG:400,ovoN:8}, carbMeio_jan, false)
+     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  },
  {key:'dom', label:'Domingo', short:'DOM', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',
    mealsTreino:[
      cafeManhaMeal(),
-     almocoTreinoMeal({lombo:160,frango:180,peixe:200,ovoG:250,ovoN:5}, carbMeio_alm, 60),
-     jantarTreinoMeal({lombo:150,frango:170,peixe:200,ovoG:400,ovoN:8}, carbMeio_jan, false)
+     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
+     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
    ],
    mealsLivre: mealsSemTreino()
  }
