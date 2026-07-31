@@ -120,7 +120,8 @@ const FOODS = {
   batataDoce:     { label:'Batata Doce Cozida',                 per100:{kcal:77,  p:0.6,  c:18.4, g:0.1} },
   feijao:         { label:'Feijão Carioca Cozido',              per100:{kcal:76,  p:4.8,  c:13.6, g:0.5} },
   paoForma:       { label:'Pão de Forma',                       per100:{kcal:253, p:12.0, c:44.1, g:2.7} },
-  paoFrances:     { label:'Pão Francês',                        per100:{kcal:300, p:8.0,  c:58.6, g:3.1} }
+  paoFrances:     { label:'Pão Francês',                        per100:{kcal:300, p:8.0,  c:58.6, g:3.1} },
+  abobora:        { label:'Abóbora Cozida',                     per100:{kcal:40,  p:1.4,  c:9.6,  g:0.1} }
 };
 function foodMacros(key,grams){
   const f=FOODS[key].per100, r=grams/100;
@@ -183,32 +184,38 @@ function cafeManhaMeal(){
 const carbSegSex_alm = [
   {key:'arrozBranco',grams:150,label:'150g de Arroz Branco Cozido (5 colheres cheias)'},
   {key:'batataInglesa',grams:230,label:'230g de Batata Inglesa Cozida (1 batata grande)'},
-  {key:'batataDoce',grams:180,label:'180g de Batata Doce Cozida (1 batata grande)'}
+  {key:'batataDoce',grams:180,label:'180g de Batata Doce Cozida (1 batata grande)'},
+  {key:'abobora',grams:375,label:'375g de Abóbora Cozida (cerca de 3 xícaras)'}
 ];
 const carbSegSex_jan = [
   {key:'batataDoce',grams:120,label:'120g de Batata Doce Cozida (2/3 batata média)'},
   {key:'batataInglesa',grams:120,label:'120g de Batata Inglesa Cozida'},
-  {key:'arrozBranco',grams:100,label:'100g de Arroz Branco Cozido (3 colheres)'}
+  {key:'arrozBranco',grams:100,label:'100g de Arroz Branco Cozido (3 colheres)'},
+  {key:'abobora',grams:235,label:'235g de Abóbora Cozida (cerca de 2 xícaras)'}
 ];
 const carbMeio_alm = [
   {key:'arrozBranco',grams:130,label:'130g de Arroz Branco Cozido (4 colheres cheias)'},
   {key:'batataInglesa',grams:200,label:'200g de Batata Inglesa Cozida (1 batata média)'},
-  {key:'batataDoce',grams:160,label:'160g de Batata Doce Cozida (1 batata média)'}
+  {key:'batataDoce',grams:160,label:'160g de Batata Doce Cozida (1 batata média)'},
+  {key:'abobora',grams:330,label:'330g de Abóbora Cozida (cerca de 2,5 xícaras)'}
 ];
 const carbMeio_jan = [
   {key:'batataDoce',grams:90,label:'90g de Batata Doce Cozida (meia batata média)'},
   {key:'batataInglesa',grams:90,label:'90g de Batata Inglesa Cozida'},
-  {key:'arrozBranco',grams:70,label:'70g de Arroz Branco Cozido (2 colheres)'}
+  {key:'arrozBranco',grams:70,label:'70g de Arroz Branco Cozido (2 colheres)'},
+  {key:'abobora',grams:170,label:'170g de Abóbora Cozida (cerca de 1,5 xícara)'}
 ];
 const carbFinde_alm = [
   {key:'arrozBranco',grams:80,label:'80g de Arroz Branco Cozido (2,5 colheres)'},
   {key:'batataInglesa',grams:130,label:'130g de Batata Inglesa Cozida'},
-  {key:'batataDoce',grams:100,label:'100g de Batata Doce Cozida'}
+  {key:'batataDoce',grams:100,label:'100g de Batata Doce Cozida'},
+  {key:'abobora',grams:205,label:'205g de Abóbora Cozida (cerca de 1,5 xícara)'}
 ];
 const carbFinde_jan = [
   {key:'batataDoce',grams:70,label:'70g de Batata Doce Cozida (meia batata pequena)'},
   {key:'batataInglesa',grams:70,label:'70g de Batata Inglesa Cozida'},
-  {key:'arrozBranco',grams:50,label:'50g de Arroz Branco Cozido'}
+  {key:'arrozBranco',grams:50,label:'50g de Arroz Branco Cozido'},
+  {key:'abobora',grams:130,label:'130g de Abóbora Cozida (cerca de 1 xícara)'}
 ];
 
 // Cardápio genérico "sem treino" — usado em qualquer dia da semana em que você não treinar
