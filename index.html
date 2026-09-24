@@ -98,6 +98,7 @@ body{
     <div class="mode-toggle">
       <button type="button" class="mode-btn" id="modeTreinoBtn" onclick="setMode('treino')"><i class="fa-solid fa-dumbbell"></i> Treinei</button>
       <button type="button" class="mode-btn" id="modeLivreBtn" onclick="setMode('livre')"><i class="fa-solid fa-couch"></i> Não treinei</button>
+      <button type="button" class="mode-btn" id="gogginsBtn" onclick="toggleGoggins()"><i class="fa-solid fa-fire"></i> Modo Goggins</button>
     </div>
   </div>
 
@@ -286,6 +287,37 @@ const DAYS = [
  }
 ];
 
+// ===== MODO GOGGINS =====
+// Janela 12h-20h (manhã só café preto), sem pão, 3 ovos no almoço, carboidrato só em dia de treino.
+// Proteína mantida em ~108g/dia. Treino ~1.050 kcal, sem treino ~890 kcal.
+const PROT_GOG_JAN_TREINO = {lombo:120, frango:130, peixe:210, ovoG:300, ovoN:6};
+const PROT_GOG_LIVRE      = {lombo:130, frango:140, peixe:230, ovoG:300, ovoN:6};
+function jejumMeal(){
+  return { time:'Até 12:00', title:'Jejum',
+    freeNotes:[
+      {text:'Só café preto sem açúcar (e água à vontade)'},
+      {text:'Eletrólitos todo dia: sal na comida, potássio e magnésio',req:true}
+    ] };
+}
+function gogginsAlmoco(prot, carbList){
+  const m = almocoTreinoMeal(prot, carbList||[], 60);
+  m.eggsFixed = {grams:150,label:'3 ovos inteiros (cozidos ou mexidos, sem óleo extra)'};
+  if(!carbList) delete m.carb;
+  return m;
+}
+function gogginsJantar(prot, carbList){
+  const m = jantarTreinoMeal(prot, carbList||[], false);
+  m.time = '20:00';
+  if(!carbList) delete m.carb;
+  return m;
+}
+DAYS.forEach(d=>{
+  const alm = d.mealsTreino.find(m=>m.title==='Almoço');
+  const jan = d.mealsTreino.find(m=>m.title==='Jantar');
+  d.gogginsTreino = [jejumMeal(), gogginsAlmoco(PROT_STANDARD, alm.carb.choices), gogginsJantar(PROT_GOG_JAN_TREINO, jan.carb.choices)];
+  d.gogginsLivre  = [jejumMeal(), gogginsAlmoco(PROT_GOG_LIVRE, null), gogginsJantar(PROT_GOG_LIVRE, null)];
+});
+
 // ===== CÁLCULO (só pra mostrar o macro de referência de cada refeição) =====
 function altKcal(choice){
   let kcal = foodMacros(choice.key, choice.grams).kcal;
@@ -335,9 +367,20 @@ if(curIdx<0) curIdx=0;
 let dayMode = {};
 DAYS.forEach(d=>{ dayMode[d.key]=d.defaultMode; });
 function curMode(day){ return dayMode[day.key]||day.defaultMode; }
-function curMeals(day){ return curMode(day)==='treino' ? day.mealsTreino : day.mealsLivre; }
+let goggins = false;
+try{ goggins = localStorage.getItem('goggins')==='1'; }catch(e){}
+function curMeals(day){
+  const treino = curMode(day)==='treino';
+  if(goggins) return treino ? day.gogginsTreino : day.gogginsLivre;
+  return treino ? day.mealsTreino : day.mealsLivre;
+}
 function setMode(mode){
   dayMode[DAYS[curIdx].key]=mode;
+  renderAll();
+}
+function toggleGoggins(){
+  goggins = !goggins;
+  try{ localStorage.setItem('goggins', goggins?'1':'0'); }catch(e){}
   renderAll();
 }
 
@@ -349,7 +392,8 @@ function renderTabs(){
 function renderHead(day){
   const mode=curMode(day);
   document.getElementById('dayTitle').textContent = day.label + (day.key===TODAY_KEY?' · hoje':'');
-  document.getElementById('dayBadge').textContent = mode==='treino' ? 'Dia de treino' : 'Sem treino';
+  document.getElementById('dayBadge').textContent = (mode==='treino' ? 'Dia de treino' : 'Sem treino') + (goggins ? ' · Goggins' : '');
+  document.getElementById('gogginsBtn').classList.toggle('active', goggins);
   document.getElementById('dayTreinoText').textContent = mode==='treino' ? day.treinoDesc : 'Dia livre / descanso';
   document.getElementById('modeTreinoBtn').classList.toggle('active', mode==='treino');
   document.getElementById('modeLivreBtn').classList.toggle('active', mode==='livre');
