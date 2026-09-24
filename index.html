@@ -87,7 +87,7 @@ body{
 <div class="wrap">
   <div class="top">
     <div class="logo">🥗</div>
-    <div><h1>Dieta</h1><p>Corte calórico · alta proteína · Leticia</p></div>
+    <div><h1>Dieta</h1><p>Modo Goggins · jejum até 12h · alta proteína · Leticia</p></div>
   </div>
 
   <div class="day-tabs" id="dayTabs"></div>
@@ -98,7 +98,6 @@ body{
     <div class="mode-toggle">
       <button type="button" class="mode-btn" id="modeTreinoBtn" onclick="setMode('treino')"><i class="fa-solid fa-dumbbell"></i> Treinei</button>
       <button type="button" class="mode-btn" id="modeLivreBtn" onclick="setMode('livre')"><i class="fa-solid fa-couch"></i> Não treinei</button>
-      <button type="button" class="mode-btn" id="gogginsBtn" onclick="toggleGoggins()"><i class="fa-solid fa-fire"></i> Modo Goggins</button>
     </div>
   </div>
 
@@ -120,66 +119,54 @@ const FOODS = {
   batataInglesa:  { label:'Batata Inglesa Cozida',              per100:{kcal:52,  p:1.2,  c:11.9, g:0.1} },
   batataDoce:     { label:'Batata Doce Cozida',                 per100:{kcal:77,  p:0.6,  c:18.4, g:0.1} },
   feijao:         { label:'Feijão Carioca Cozido',              per100:{kcal:76,  p:4.8,  c:13.6, g:0.5} },
-  paoForma:       { label:'Pão de Forma',                       per100:{kcal:253, p:12.0, c:44.1, g:2.7} },
-  paoFrances:     { label:'Pão Francês',                        per100:{kcal:300, p:8.0,  c:58.6, g:3.1} },
   abobora:        { label:'Abóbora Cozida',                     per100:{kcal:40,  p:1.4,  c:9.6,  g:0.1} }
 };
 function foodMacros(key,grams){
   const f=FOODS[key].per100, r=grams/100;
   return {kcal:f.kcal*r, p:f.p*r, c:f.c*r, g:f.g*r};
 }
-function eggBonus(g,n){ return [{key:'ovo',grams:g,label:`+ ${n} ovos inteiros (bônus de proteína)`}] }
-
 // Meta: 108g proteína/dia (1,8g/kg x 60kg de massa magra), igual em dias com treino e sem treino.
-// Quantidades padronizadas de proteína no almoço/jantar (já contando pão, arroz/batata e feijão
-// que também entram na conta) para o total do dia bater ~108g, com treino ou sem treino.
-const PROT_STANDARD = {lombo:105, frango:115, peixe:185, ovoG:250, ovoN:5};
+// Modo Goggins: janela 12h-20h (manhã só café preto), sem pão, 3 ovos no almoço,
+// carboidrato só em dia de treino. Treino ~1.000 kcal, sem treino ~810 kcal.
+const PROT_ALMOCO        = {lombo:105, frango:115, peixe:185, ovoG:250, ovoN:5};
+const PROT_JANTAR_TREINO = {lombo:120, frango:130, peixe:210, ovoG:300, ovoN:6};
+const PROT_LIVRE         = {lombo:130, frango:140, peixe:230, ovoG:300, ovoN:6};
 
 // ===== DIAS =====
-const paoChoices=[
-  {key:'paoForma',grams:50,label:'2 fatias de Pão de Forma',short:'Pão de forma'},
-  {key:'paoFrances',grams:50,label:'1 Pão Francês',short:'Pão francês'}
-];
 const reqVeg=(txt)=>({text:`Vegetais (obrigatório): ${txt}`,req:true});
 const reqFibra={text:'Fibra (obrigatório): 1 colher de sopa de psyllium em 400ml água',req:true};
-const cafePreto={text:'Café preto'};
 
-function almocoTreinoMeal(prot, carbList, feijaoG){
-  return { time:'12:30', title:'Almoço',
-    protein:{choices:[
-      {key:'lombo',grams:prot.lombo,label:`${prot.lombo}g de Lombo Suíno Grelhado`,extra:[]},
-      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,extra:[]},
-      {key:'frangoSobrecoxa',grams:prot.frango,label:`${prot.frango}g de Frango Sobrecoxa (com pele) Assada`,extra:[]},
-      {key:'peixe',grams:prot.peixe,label:`${prot.peixe}g de Peixe Branco Grelhado`,extra:[]},
-      {key:'ovo',grams:prot.ovoG,label:`${prot.ovoN} ovos inteiros (cozidos ou mexidos, sem óleo extra)`,extra:[]}
-    ]},
-    carb:{choices:carbList},
-    feijao:{grams:feijaoG},
-    freeNotes:[reqVeg('1-2 xícaras de vegetais cozidos à vontade'), reqFibra]
-  };
+function proteinChoices(prot, peixeLabel){
+  return [
+    {key:'lombo',grams:prot.lombo,label:`${prot.lombo}g de Lombo Suíno Grelhado`},
+    {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`},
+    {key:'frangoSobrecoxa',grams:prot.frango,label:`${prot.frango}g de Frango Sobrecoxa (com pele) Assada`},
+    {key:'peixe',grams:prot.peixe,label:`${prot.peixe}g de ${peixeLabel}`},
+    {key:'ovo',grams:prot.ovoG,label:`${prot.ovoN} ovos inteiros (cozidos ou mexidos, sem óleo extra)`}
+  ];
 }
-function jantarTreinoMeal(prot, carbList, bonus){
-  return { time:'21:00', title:'Jantar',
-    protein:{choices:[
-      {key:'lombo',grams:prot.lombo,label:`${prot.lombo}g de Lombo Suíno Grelhado`,extra:bonus?eggBonus(150,3):[]},
-      {key:'frango',grams:prot.frango,label:`${prot.frango}g de Frango Peito Grelhado`,extra:bonus?eggBonus(150,3):[]},
-      {key:'frangoSobrecoxa',grams:prot.frango,label:`${prot.frango}g de Frango Sobrecoxa (com pele) Assada`,extra:bonus?eggBonus(150,3):[]},
-      {key:'peixe',grams:prot.peixe,label:`${prot.peixe}g de Peixe Grelhado`,extra:bonus?eggBonus(150,3):[]},
-      {key:'ovo',grams:prot.ovoG,label:`${prot.ovoN} ovos inteiros (cozidos ou mexidos, sem óleo extra)`,extra:[]}
-    ]},
-    carb:{choices:carbList},
-    freeNotes:[reqVeg('1-2 xícaras de salada crua à vontade')]
-  };
+function jejumMeal(){
+  return { time:'Até 12:00', title:'Jejum',
+    freeNotes:[
+      {text:'Só café preto sem açúcar (e água à vontade)'},
+      {text:'Eletrólitos todo dia: sal na comida, potássio e magnésio',req:true}
+    ] };
 }
-function posTreinoMeal(time){
-  return { time, title:'Pós-treino imediato',
+function almocoMeal(prot, carbList){
+  const m = { time:'12:30', title:'Almoço',
     eggsFixed:{grams:150,label:'3 ovos inteiros (cozidos ou mexidos, sem óleo extra)'},
-    bread:{choices:paoChoices}, freeNotes:[cafePreto] };
+    protein:{choices:proteinChoices(prot,'Peixe Branco Grelhado')},
+    feijao:{grams:60},
+    freeNotes:[reqVeg('1-2 xícaras de vegetais cozidos à vontade'), reqFibra] };
+  if(carbList) m.carb = {choices:carbList};
+  return m;
 }
-function cafeManhaMeal(){
-  return { time:'07:00', title:'Café da manhã',
-    eggsFixed:{grams:150,label:'3 ovos inteiros (cozidos ou mexidos)'},
-    bread:{choices:paoChoices}, freeNotes:[cafePreto] };
+function jantarMeal(prot, carbList){
+  const m = { time:'20:00', title:'Jantar',
+    protein:{choices:proteinChoices(prot,'Peixe Grelhado')},
+    freeNotes:[reqVeg('1-2 xícaras de salada crua à vontade')] };
+  if(carbList) m.carb = {choices:carbList};
+  return m;
 }
 
 const carbSegSex_alm = [
@@ -206,133 +193,29 @@ const carbMeio_jan = [
   {key:'arrozBranco',grams:70,label:'70g de Arroz Branco Cozido (2 colheres)'},
   {key:'abobora',grams:170,label:'170g de Abóbora Cozida (cerca de 1,5 xícara)'}
 ];
-const carbFinde_alm = [
-  {key:'arrozBranco',grams:80,label:'80g de Arroz Branco Cozido (2,5 colheres)'},
-  {key:'batataInglesa',grams:130,label:'130g de Batata Inglesa Cozida'},
-  {key:'batataDoce',grams:100,label:'100g de Batata Doce Cozida'},
-  {key:'abobora',grams:205,label:'205g de Abóbora Cozida (cerca de 1,5 xícara)'}
-];
-const carbFinde_jan = [
-  {key:'batataDoce',grams:70,label:'70g de Batata Doce Cozida (meia batata pequena)'},
-  {key:'batataInglesa',grams:70,label:'70g de Batata Inglesa Cozida'},
-  {key:'arrozBranco',grams:50,label:'50g de Arroz Branco Cozido'},
-  {key:'abobora',grams:130,label:'130g de Abóbora Cozida (cerca de 1 xícara)'}
-];
 
-// Cardápio genérico "sem treino" — usado em qualquer dia da semana em que você não treinar
-function mealsSemTreino(){
-  return [
-    cafeManhaMeal(),
-    almocoTreinoMeal(PROT_STANDARD, carbFinde_alm, 40),
-    jantarTreinoMeal(PROT_STANDARD, carbFinde_jan, false)
-  ];
+// Cardápio "sem treino" — usado em qualquer dia da semana em que você não treinar
+const mealsLivre = [jejumMeal(), almocoMeal(PROT_LIVRE, null), jantarMeal(PROT_LIVRE, null)];
+function mealsTreino(carbAlm, carbJan){
+  return [jejumMeal(), almocoMeal(PROT_ALMOCO, carbAlm), jantarMeal(PROT_JANTAR_TREINO, carbJan)];
 }
 
 const DAYS = [
- {key:'seg', label:'Segunda', short:'SEG', treinoDesc:'Jiu Jitsu + Musculação + Esteira', defaultMode:'treino',
-   mealsTreino:[
-     posTreinoMeal('07:45'),
-     almocoTreinoMeal(PROT_STANDARD, carbSegSex_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbSegSex_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'ter', label:'Terça', short:'TER', treinoDesc:'Dia de treino', defaultMode:'treino',
-   mealsTreino:[
-     cafeManhaMeal(),
-     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'qua', label:'Quarta', short:'QUA', treinoDesc:'Dia de treino', defaultMode:'treino',
-   mealsTreino:[
-     cafeManhaMeal(),
-     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'qui', label:'Quinta', short:'QUI', treinoDesc:'Dia de treino', defaultMode:'treino',
-   mealsTreino:[
-     cafeManhaMeal(),
-     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 40),
-     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'sex', label:'Sexta', short:'SEX', treinoDesc:'Musculação', defaultMode:'treino',
-   mealsTreino:[
-     posTreinoMeal('07:15'),
-     almocoTreinoMeal(PROT_STANDARD, carbSegSex_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbSegSex_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'sab', label:'Sábado', short:'SÁB', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',
-   mealsTreino:[
-     cafeManhaMeal(),
-     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- },
- {key:'dom', label:'Domingo', short:'DOM', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',
-   mealsTreino:[
-     cafeManhaMeal(),
-     almocoTreinoMeal(PROT_STANDARD, carbMeio_alm, 60),
-     jantarTreinoMeal(PROT_STANDARD, carbMeio_jan, false)
-   ],
-   mealsLivre: mealsSemTreino()
- }
+ {key:'seg', label:'Segunda', short:'SEG', treinoDesc:'Jiu Jitsu + Musculação + Esteira', defaultMode:'treino', mealsTreino:mealsTreino(carbSegSex_alm, carbSegSex_jan)},
+ {key:'ter', label:'Terça',   short:'TER', treinoDesc:'Dia de treino',            defaultMode:'treino', mealsTreino:mealsTreino(carbMeio_alm, carbMeio_jan)},
+ {key:'qua', label:'Quarta',  short:'QUA', treinoDesc:'Dia de treino',            defaultMode:'treino', mealsTreino:mealsTreino(carbMeio_alm, carbMeio_jan)},
+ {key:'qui', label:'Quinta',  short:'QUI', treinoDesc:'Dia de treino',            defaultMode:'treino', mealsTreino:mealsTreino(carbMeio_alm, carbMeio_jan)},
+ {key:'sex', label:'Sexta',   short:'SEX', treinoDesc:'Musculação',               defaultMode:'treino', mealsTreino:mealsTreino(carbSegSex_alm, carbSegSex_jan)},
+ {key:'sab', label:'Sábado',  short:'SÁB', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',  mealsTreino:mealsTreino(carbMeio_alm, carbMeio_jan)},
+ {key:'dom', label:'Domingo', short:'DOM', treinoDesc:'Treinou no fim de semana', defaultMode:'livre',  mealsTreino:mealsTreino(carbMeio_alm, carbMeio_jan)}
 ];
 
-// ===== MODO GOGGINS =====
-// Janela 12h-20h (manhã só café preto), sem pão, 3 ovos no almoço, carboidrato só em dia de treino.
-// Proteína mantida em ~108g/dia. Treino ~1.050 kcal, sem treino ~890 kcal.
-const PROT_GOG_JAN_TREINO = {lombo:120, frango:130, peixe:210, ovoG:300, ovoN:6};
-const PROT_GOG_LIVRE      = {lombo:130, frango:140, peixe:230, ovoG:300, ovoN:6};
-function jejumMeal(){
-  return { time:'Até 12:00', title:'Jejum',
-    freeNotes:[
-      {text:'Só café preto sem açúcar (e água à vontade)'},
-      {text:'Eletrólitos todo dia: sal na comida, potássio e magnésio',req:true}
-    ] };
-}
-function gogginsAlmoco(prot, carbList){
-  const m = almocoTreinoMeal(prot, carbList||[], 60);
-  m.eggsFixed = {grams:150,label:'3 ovos inteiros (cozidos ou mexidos, sem óleo extra)'};
-  if(!carbList) delete m.carb;
-  return m;
-}
-function gogginsJantar(prot, carbList){
-  const m = jantarTreinoMeal(prot, carbList||[], false);
-  m.time = '20:00';
-  if(!carbList) delete m.carb;
-  return m;
-}
-DAYS.forEach(d=>{
-  const alm = d.mealsTreino.find(m=>m.title==='Almoço');
-  const jan = d.mealsTreino.find(m=>m.title==='Jantar');
-  d.gogginsTreino = [jejumMeal(), gogginsAlmoco(PROT_STANDARD, alm.carb.choices), gogginsJantar(PROT_GOG_JAN_TREINO, jan.carb.choices)];
-  d.gogginsLivre  = [jejumMeal(), gogginsAlmoco(PROT_GOG_LIVRE, null), gogginsJantar(PROT_GOG_LIVRE, null)];
-});
-
 // ===== CÁLCULO (só pra mostrar o macro de referência de cada refeição) =====
-function altKcal(choice){
-  let kcal = foodMacros(choice.key, choice.grams).kcal;
-  (choice.extra||[]).forEach(e=>kcal+=foodMacros(e.key,e.grams).kcal);
-  return Math.round(kcal);
-}
-function altLabel(choice){
-  let lbl = choice.label;
-  if(choice.extra && choice.extra.length) lbl += ' ' + choice.extra.map(e=>e.label).join(' ');
-  return lbl;
-}
+function altKcal(choice){ return Math.round(foodMacros(choice.key, choice.grams).kcal); }
 function choicesLine(title, choices){
   const items = choices.map((c,i)=>`<li>
       <span class="choice-tag${i>0?' ou':''}">${i===0?'opção':'ou'}</span>
-      <span>${altLabel(c)}</span>
+      <span>${c.label}</span>
       <span class="kc">${altKcal(c)} kcal</span>
     </li>`).join('');
   return `<div class="choice-group">
@@ -344,12 +227,7 @@ function mealDefaultMacros(meal){
   let t={kcal:0,p:0,c:0,g:0};
   function add(key,grams){ const m=foodMacros(key,grams); t.kcal+=m.kcal;t.p+=m.p;t.c+=m.c;t.g+=m.g; }
   if(meal.eggsFixed) add('ovo', meal.eggsFixed.grams);
-  if(meal.bread){ const c=meal.bread.choices[0]; add(c.key,c.grams); }
-  if(meal.protein){
-    const c=meal.protein.choices[0];
-    add(c.key,c.grams);
-    (c.extra||[]).forEach(e=>add(e.key,e.grams));
-  }
+  if(meal.protein){ const c=meal.protein.choices[0]; add(c.key,c.grams); }
   if(meal.carb){ const c=meal.carb.choices[0]; add(c.key,c.grams); }
   if(meal.feijao) add('feijao', meal.feijao.grams);
   return { kcal:Math.round(t.kcal), p:Math.round(t.p*10)/10, c:Math.round(t.c*10)/10, g:Math.round(t.g*10)/10 };
@@ -367,20 +245,9 @@ if(curIdx<0) curIdx=0;
 let dayMode = {};
 DAYS.forEach(d=>{ dayMode[d.key]=d.defaultMode; });
 function curMode(day){ return dayMode[day.key]||day.defaultMode; }
-let goggins = false;
-try{ goggins = localStorage.getItem('goggins')==='1'; }catch(e){}
-function curMeals(day){
-  const treino = curMode(day)==='treino';
-  if(goggins) return treino ? day.gogginsTreino : day.gogginsLivre;
-  return treino ? day.mealsTreino : day.mealsLivre;
-}
+function curMeals(day){ return curMode(day)==='treino' ? day.mealsTreino : mealsLivre; }
 function setMode(mode){
   dayMode[DAYS[curIdx].key]=mode;
-  renderAll();
-}
-function toggleGoggins(){
-  goggins = !goggins;
-  try{ localStorage.setItem('goggins', goggins?'1':'0'); }catch(e){}
   renderAll();
 }
 
@@ -392,8 +259,7 @@ function renderTabs(){
 function renderHead(day){
   const mode=curMode(day);
   document.getElementById('dayTitle').textContent = day.label + (day.key===TODAY_KEY?' · hoje':'');
-  document.getElementById('dayBadge').textContent = (mode==='treino' ? 'Dia de treino' : 'Sem treino') + (goggins ? ' · Goggins' : '');
-  document.getElementById('gogginsBtn').classList.toggle('active', goggins);
+  document.getElementById('dayBadge').textContent = mode==='treino' ? 'Dia de treino' : 'Sem treino';
   document.getElementById('dayTreinoText').textContent = mode==='treino' ? day.treinoDesc : 'Dia livre / descanso';
   document.getElementById('modeTreinoBtn').classList.toggle('active', mode==='treino');
   document.getElementById('modeLivreBtn').classList.toggle('active', mode==='livre');
@@ -404,7 +270,6 @@ function renderMeals(day){
     const mac = mealDefaultMacros(meal);
     let lines='';
     if(meal.eggsFixed) lines+=`<div class="food-line">${meal.eggsFixed.label} <span class="kc">(${Math.round(foodMacros('ovo',meal.eggsFixed.grams).kcal)} kcal)</span></div>`;
-    if(meal.bread) lines+=choicesLine('Pão', meal.bread.choices);
     if(meal.protein) lines+=choicesLine('Proteína', meal.protein.choices);
     if(meal.carb) lines+=choicesLine('Carboidrato', meal.carb.choices);
     if(meal.feijao) lines+=`<div class="food-line"><b>Leguminosa:</b> ${meal.feijao.grams}g de Feijão Carioca Cozido <span class="kc">(${Math.round(foodMacros('feijao',meal.feijao.grams).kcal)} kcal)</span></div>`;
